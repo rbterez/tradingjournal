@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Journal App</title>
+    <!-- Load Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for better aesthetics */
+        :root {
+            --primary-color: #10b981; /* Emerald 500 */
+            --bg-color: #1f2937; /* Gray 800 */
+            --card-color: #374151; /* Gray 700 */
+            --text-color: #f3f4f6; /* Gray 100 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        .card {
+            background-color: var(--card-color);
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #1f2937; /* Dark text for contrast */
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .btn-primary:hover {
+            background-color: #059669; /* Emerald 600 */
+            transform: translateY(-1px);
+        }
+        .tab-btn.active {
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        input[type="number"], input[type="text"], input[type="date"], select, textarea {
+            background-color: #1f2937; /* Gray 800 */
+            border: 1px solid #4b5563; /* Gray 600 */
+            color: var(--text-color);
+        }
+        /* Style for the file input to make it look better with Tailwind */
+        input[type="file"] {
+            padding: 0;
+        }
+        input[type="file"]::file-selector-button {
+            background-color: #10b981;
+            color: #1f2937;
+            padding: 0.5rem 1rem;
+            margin-right: 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-white mb-2">My Trading Journal</h1>
+            <p class="text-gray-400">Track, analyze, and improve your trading performance.</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex justify-center border-b border-gray-700 mb-8 sticky top-0 bg-gray-800 z-10">
+            <button id="nav-dashboard" onclick="changeView('dashboard')" class="tab-btn py-3 px-6 text-lg hover:text-emerald-400 transition active">Dashboard</button>
+            <button id="nav-entry" onclick="changeView('entry')" class="tab-btn py-3 px-6 text-lg hover:text-emerald-400 transition">Journal Entry</button>
+            <button id="nav-reports" onclick="changeView('reports')" class="tab-btn py-3 px-6 text-lg hover:text-emerald-400 transition">Reports</button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main id="app-container">
+
+            <!-- 1. Dashboard View -->
+            <section id="dashboard-view" class="view">
+                <h2 class="text-3xl font-bold mb-6 text-white">Performance Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <!-- Metric 1: Total Trades -->
+                    <div class="card p-6 text-center">
+                        <p class="text-sm uppercase text-gray-400 font-semibold mb-2">Total Trades</p>
+                        <p id="metric-total-trades" class="text-5xl font-bold text-white">0</p>
+                    </div>
+
+                    <!-- Metric 2: Total P&L -->
+                    <div class="card p-6 text-center">
+                        <p class="text-sm uppercase text-gray-400 font-semibold mb-2">Net P&L</p>
+                        <p id="metric-total-pnl" class="text-5xl font-bold text-white text-green-400">$0.00</p>
+                    </div>
+
+                    <!-- Metric 3: Win Rate -->
+                    <div class="card p-6 text-center">
+                        <p class="text-sm uppercase text-gray-400 font-semibold mb-2">Win Rate</p>
+                        <p id="metric-win-rate" class="text-5xl font-bold text-white">0.00%</p>
+                    </div>
+                </div>
+
+                <div class="mt-12 card p-6">
+                    <h3 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2">Trading Tips</h3>
+                    <ul class="text-gray-300 list-disc list-inside space-y-2">
+                        <li>Focus on **consistency** over high profits in the short term.</li>
+                        <li>Review your **losing trades** more often than your winning trades.</li>
+                        <li>Define your **risk management** rules before every entry.</li>
+                        <li>Use the **Reports** section to identify your best and worst performing setups.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 2. Journal Entry View -->
+            <section id="entry-view" class="view hidden">
+                <h2 class="text-3xl font-bold mb-6 text-white">New Trade Entry</h2>
+                <form id="trade-form" class="card p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Field 1: Date -->
+                    <div>
+                        <label for="trade-date" class="block text-sm font-medium mb-1 text-gray-300">Date</label>
+                        <input type="date" id="trade-date" required class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <!-- Field 2: Asset/Symbol -->
+                    <div>
+                        <label for="trade-symbol" class="block text-sm font-medium mb-1 text-gray-300">Asset / Symbol</label>
+                        <input type="text" id="trade-symbol" required placeholder="e.g., AAPL, EURUSD, BTC" class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <!-- Field 3: Type -->
+                    <div>
+                        <label for="trade-type" class="block text-sm font-medium mb-1 text-gray-300">Trade Type</label>
+                        <select id="trade-type" required class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="">Select Type</option>
+                            <option value="Long">Long (Buy)</option>
+                            <option value="Short">Short (Sell)</option>
+                        </select>
+                    </div>
+
+                    <!-- Field 4: Size (Units/Contracts) -->
+                    <div>
+                        <label for="trade-size" class="block text-sm font-medium mb-1 text-gray-300">Position Size (Units)</label>
+                        <input type="number" id="trade-size" required min="1" step="any" placeholder="e.g., 100" class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <!-- Field 5: Entry Price -->
+                    <div>
+                        <label for="trade-entry" class="block text-sm font-medium mb-1 text-gray-300">Entry Price ($)</label>
+                        <input type="number" id="trade-entry" required step="0.0001" placeholder="e.g., 150.2500" class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <!-- Field 6: Exit Price -->
+                    <div>
+                        <label for="trade-exit" class="block text-sm font-medium mb-1 text-gray-300">Exit Price ($)</label>
+                        <input type="number" id="trade-exit" required step="0.0001" placeholder="e.g., 151.5000" class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <!-- Field 7: Profit/Loss -->
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="trade-pnl" class="block text-sm font-medium mb-1 text-gray-300">Realized P&L ($)</label>
+                        <input type="number" id="trade-pnl" required step="0.0001" placeholder="Enter positive for profit, negative for loss" class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                        <p class="text-xs text-gray-400 mt-1">This is the final dollar amount (e.g., 125.5000 or -50.0000)</p>
+                    </div>
+
+                    <!-- Field 8: Notes/Reason -->
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="trade-notes" class="block text-sm font-medium mb-1 text-gray-300">Notes & Strategy</label>
+                        <textarea id="trade-notes" rows="3" placeholder="Why did you enter this trade? What was your plan?" class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+                    </div>
+
+                    <!-- Field 9: Image Upload (NEW) -->
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="trade-image" class="block text-sm font-medium mb-1 text-gray-300">Chart Screenshot (Optional)</label>
+                        <input type="file" id="trade-image" accept="image/*" class="w-full p-3 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                        <p class="text-xs text-gray-400 mt-1">Upload a chart image to document your entry/exit.</p>
+                        <!-- Image Preview -->
+                        <div id="image-preview-container" class="mt-2 hidden">
+                            <p class="text-xs text-gray-500 mb-1">Image Preview:</p>
+                            <img id="image-preview" class="h-16 w-16 object-cover rounded-md border border-gray-600 shadow-md" alt="Image Preview">
+                        </div>
+                    </div>
+
+
+                    <!-- Form Submission -->
+                    <div class="col-span-1 md:col-span-2 flex justify-between items-center">
+                        <div id="entry-message" class="text-sm font-semibold"></div>
+                        <button type="submit" class="btn-primary">
+                            Log Trade
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- 3. Reports View -->
+            <section id="reports-view" class="view hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-white">Trade History</h2>
+                    <button onclick="exportToCsv()" class="btn-primary flex items-center space-x-2 bg-indigo-500 hover:bg-indigo-600 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Export to Excel (CSV)
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto card p-4">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300">Symbol</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300">Type</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300">Entry / Exit</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-300">P&L ($)</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-300">Chart</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trades-table-body" class="divide-y divide-gray-800">
+                            <!-- Trade rows will be injected here by JavaScript -->
+                            <tr>
+                                <td colspan="7" class="p-6 text-center text-gray-500" id="no-trades-message">No trades logged yet. Start logging in the Journal Entry tab!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Image Modal (for viewing full-size chart) -->
+    <div id="image-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 z-50 flex items-center justify-center p-4">
+        <div class="relative max-w-4xl max-h-[90vh] bg-gray-700 rounded-lg shadow-2xl overflow-hidden">
+            <img id="modal-image" class="max-h-[80vh] w-auto object-contain" src="" alt="Trade Chart">
+            <button onclick="closeImageModal()" class="absolute top-3 right-3 text-white text-2xl font-bold bg-gray-800 bg-opacity-50 hover:bg-opacity-100 p-2 rounded-full transition">
+                &times;
+            </button>
+        </div>
+    </div>
+
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Global state for trades
+        let trades = [];
+        const STORAGE_KEY = 'tradingJournalTrades';
+
+        // --- Utility Functions ---
+
+        /**
+         * Loads trades from localStorage on startup.
+         */
+        function loadTrades() {
+            try {
+                const storedTrades = localStorage.getItem(STORAGE_KEY);
+                if (storedTrades) {
+                    trades = JSON.parse(storedTrades).sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
+            } catch (error) {
+                console.error("Error loading trades from storage:", error);
+            }
+        }
+
+        /**
+         * Saves the current trades array to localStorage.
+         */
+        function saveTrades() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
+        }
+
+        /**
+         * Clears a field and shows a temporary message.
+         * @param {string} message Text to display.
+         * @param {string} type 'success' or 'error'.
+         */
+        function showEntryMessage(message, type) {
+            const entryMessageEl = document.getElementById('entry-message');
+            entryMessageEl.textContent = message;
+            entryMessageEl.className = `text-sm font-semibold transition-colors duration-300 ${type === 'success' ? 'text-emerald-400' : 'text-red-400'}`;
+            setTimeout(() => {
+                entryMessageEl.textContent = '';
+            }, 3000);
+        }
+
+        /**
+         * Reads a file object and converts it to a Base64 data URL.
+         * @param {File} file The file object to read.
+         * @returns {Promise<string|null>} Base64 string or null if no file.
+         */
+        function readImageAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    resolve(null);
+                    return;
+                }
+                if (!file.type.startsWith('image/')) {
+                    reject(new Error("File is not an image."));
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- Core Application Logic ---
+
+        /**
+         * Calculates and updates the Dashboard metrics.
+         */
+        function updateDashboard() {
+            const totalTrades = trades.length;
+            const totalPnl = trades.reduce((sum, trade) => sum + parseFloat(trade.pnl || 0), 0);
+
+            const winningTrades = trades.filter(trade => parseFloat(trade.pnl || 0) > 0).length;
+            const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
+
+            // Update DOM elements
+            const pnlColorClass = totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400';
+            const formattedPnl = totalPnl.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+            document.getElementById('metric-total-trades').textContent = totalTrades;
+            document.getElementById('metric-total-pnl').textContent = formattedPnl;
+            document.getElementById('metric-total-pnl').className = `text-5xl font-bold ${pnlColorClass}`;
+            document.getElementById('metric-win-rate').textContent = `${winRate.toFixed(2)}%`;
+        }
+
+        /**
+         * Renders the trades list in the Reports table.
+         */
+        function renderReports() {
+            const tableBody = document.getElementById('trades-table-body');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            // Note: colspan is 7 now (6 original columns + 1 Chart column)
+            if (trades.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-500" id="no-trades-message">No trades logged yet. Start logging in the Journal Entry tab!</td></tr>`;
+                return;
+            }
+
+            trades.forEach(trade => {
+                const pnlValue = parseFloat(trade.pnl || 0);
+                const isProfit = pnlValue > 0;
+                const pnlClass = isProfit ? 'text-emerald-400' : (pnlValue < 0 ? 'text-red-400' : 'text-gray-400');
+                const formattedPnl = pnlValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const date = new Date(trade.date).toLocaleDateString();
+
+                // Chart Cell Logic
+                const chartCell = trade.imagePreview ?
+                    `<img src="${trade.imagePreview}" class="h-8 w-8 object-cover rounded shadow cursor-pointer transition hover:scale-110" onclick="openImageModal('${trade.imagePreview}')" title="Click to view chart">` :
+                    `<span class="text-gray-500 text-xs">-</span>`;
+
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-600 transition-colors duration-150';
+                row.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-300">${date}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-white font-semibold">${trade.symbol.toUpperCase()}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-400">${trade.type}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-400">$${trade.entry} / $${trade.exit}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-right ${pnlClass}">${formattedPnl}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-center">${chartCell}</td>
+                    <td class="px-4 py-3 text-sm text-gray-400 max-w-xs truncate" title="${trade.notes}">${trade.notes || '-'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Event listener for image input change to display a preview.
+         */
+        document.getElementById('trade-image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
+
+            if (file) {
+                if (file.size > 2 * 1024 * 1024) { // Warning if image is over 2MB
+                    showEntryMessage('Warning: Image size is large. App performance may degrade.', 'error');
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.classList.add('hidden');
+                previewImg.src = '';
+            }
+        });
+
+        /**
+         * Handles the form submission for a new trade entry.
+         * Made asynchronous to handle file reading.
+         * @param {Event} e The submit event.
+         */
+        document.getElementById('trade-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Basic Validation Check
+            const tradeDate = document.getElementById('trade-date').value;
+            const tradeSymbol = document.getElementById('trade-symbol').value.trim();
+            const tradeType = document.getElementById('trade-type').value;
+            const tradeSize = parseFloat(document.getElementById('trade-size').value);
+            const tradeEntry = parseFloat(document.getElementById('trade-entry').value);
+            const tradeExit = parseFloat(document.getElementById('trade-exit').value);
+            const tradePnl = parseFloat(document.getElementById('trade-pnl').value);
+
+            if (!tradeDate || !tradeSymbol || !tradeType || isNaN(tradeSize) || isNaN(tradeEntry) || isNaN(tradeExit) || isNaN(tradePnl)) {
+                showEntryMessage('Please fill out all required fields with valid numbers.', 'error');
+                return;
+            }
+
+            // Handle image file reading (asynchronous)
+            const imageFile = document.getElementById('trade-image').files[0];
+            let imageBase64 = null;
+            if (imageFile) {
+                try {
+                    imageBase64 = await readImageAsBase64(imageFile);
+                } catch (err) {
+                    console.error("Image reading failed:", err);
+                    showEntryMessage('Image reading failed. Try a different file.', 'error');
+                    // Continue without image
+                }
+            }
+
+
+            const newTrade = {
+                id: Date.now(),
+                date: tradeDate,
+                symbol: tradeSymbol,
+                type: tradeType,
+                size: tradeSize,
+                entry: tradeEntry,
+                exit: tradeExit,
+                pnl: tradePnl,
+                notes: document.getElementById('trade-notes').value.trim(),
+                imagePreview: imageBase64, // NEW FIELD: Base64 image data
+                timestamp: new Date().toISOString()
+            };
+
+            trades.unshift(newTrade); // Add to the start
+            saveTrades();
+            updateAllViews();
+            this.reset(); // Clear the form
+            // Also reset image preview
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('image-preview').src = '';
+
+            showEntryMessage('Trade successfully logged!', 'success');
+        });
+
+        // --- View Navigation ---
+
+        /**
+         * Switches the visible section of the application.
+         * @param {string} viewName 'dashboard', 'entry', or 'reports'.
+         */
+        function changeView(viewName) {
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+
+            // Update active navigation tab styling
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`nav-${viewName}`).classList.add('active');
+        }
+
+        // --- Image Modal Functions ---
+
+        /**
+         * Opens the image modal with the given base64 image data.
+         * @param {string} base64Data The base64 string of the image.
+         */
+        function openImageModal(base64Data) {
+            document.getElementById('modal-image').src = base64Data;
+            document.getElementById('image-modal').classList.remove('hidden');
+        }
+
+        /**
+         * Closes the image modal.
+         */
+        function closeImageModal() {
+            document.getElementById('image-modal').classList.add('hidden');
+            document.getElementById('modal-image').src = '';
+        }
+
+        // --- Excel Export (CSV) Functionality ---
+
+        /**
+         * Converts the trades array to CSV and triggers a download.
+         */
+        function exportToCsv() {
+            if (trades.length === 0) {
+                showEntryMessage('No trades to export.', 'error');
+                return;
+            }
+
+            // Updated headers to include the image data column
+            const headers = ['ID', 'Date', 'Symbol', 'Type', 'Size', 'EntryPrice', 'ExitPrice', 'PNL', 'Notes', 'ImageBase64', 'Timestamp'];
+            let csvContent = headers.join(',') + '\n';
+
+            trades.forEach(trade => {
+                // Ensure data is safe for CSV (wrap notes/image in quotes and escape internal quotes)
+                const notesSafe = `"${(trade.notes || '').replace(/"/g, '""')}"`;
+                const imageSafe = `"${(trade.imagePreview || '').replace(/"/g, '""')}"`; // Base64 string is included here
+
+                const row = [
+                    trade.id,
+                    trade.date,
+                    trade.symbol.toUpperCase(),
+                    trade.type,
+                    trade.size,
+                    trade.entry,
+                    trade.exit,
+                    trade.pnl,
+                    notesSafe,
+                    imageSafe, // Base64 data included in export
+                    trade.timestamp
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+
+            // Create a blob and trigger download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', `trading_journal_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showEntryMessage('Data exported successfully!', 'success');
+        }
+
+        /**
+         * Updates all dynamic parts of the application.
+         */
+        function updateAllViews() {
+            updateDashboard();
+            renderReports();
+        }
+
+        // --- Initialization ---
+
+        window.onload = function() {
+            loadTrades();
+            updateAllViews();
+            changeView('dashboard'); // Start on the dashboard
+
+            // Pre-fill today's date for convenience
+            document.getElementById('trade-date').value = new Date().toISOString().split('T')[0];
+        };
+
+    </script>
+</body>
+</html>
